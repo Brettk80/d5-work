@@ -1,0 +1,14 @@
+[build]
+  command = "CI=true npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "18.20.3"
+  NPM_FLAGS = "--legacy-peer-deps --verbose"
+  CI = "true"
+  DEBUG = "*"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

@@ -1,7 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Bell, Package2, Video, FileText, Mail, BarChart3, HelpCircle, X, Send, Ban, Settings, ChevronDown, DollarSign } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { toast } from 'sonner';
+import { Bell, Mail, BarChart3, HelpCircle, Send, Ban, Settings, ChevronDown, DollarSign } from 'lucide-react';
 import Inbox from './Inbox';
 import FaxBroadcast from './fax/FaxBroadcast';
 import BroadcastReports from './reports/BroadcastReports';
@@ -72,7 +70,6 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
     }
   ];
 
-  // Close menus when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (notificationRef.current && !notificationRef.current.contains(event.target as Node)) {
@@ -124,7 +121,30 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
                     </span>
                   )}
                 </button>
-                {/* Notifications dropdown remains the same */}
+                {showNotifications && (
+                  <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg ring-1 ring-black ring-opacity-5 z-50">
+                    <div className="p-4">
+                      {notifications.length === 0 ? (
+                        <p className="text-gray-500 text-center">No new notifications</p>
+                      ) : (
+                        <div className="space-y-4">
+                          {notifications.map((notification) => (
+                            <div key={notification.id} className="flex items-start">
+                              <div className="ml-3">
+                                <p className="text-sm font-medium text-gray-900">
+                                  New fax received
+                                </p>
+                                <p className="text-sm text-gray-500">
+                                  From: {notification.fromNumber}
+                                </p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
               <div className="relative" ref={userMenuRef}>
                 <button
@@ -134,39 +154,32 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
                   <span className="text-sm font-medium">{user.name}</span>
                   <ChevronDown className="h-4 w-4" />
                 </button>
-                <AnimatePresence>
-                  {showUserMenu && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg ring-1 ring-black ring-opacity-5 z-50"
-                    >
-                      <div className="py-1">
-                        <button
-                          onClick={() => {
-                            setActiveSection('profile');
-                            setShowUserMenu(false);
-                          }}
-                          className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                        >
-                          <Settings className="h-4 w-4 mr-2" />
-                          Account Settings
-                        </button>
-                        <button
-                          onClick={() => {
-                            setActiveSection('billing');
-                            setShowUserMenu(false);
-                          }}
-                          className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                        >
-                          <DollarSign className="h-4 w-4 mr-2" />
-                          Billing & Invoices
-                        </button>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                {showUserMenu && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg ring-1 ring-black ring-opacity-5 z-50">
+                    <div className="py-1">
+                      <button
+                        onClick={() => {
+                          setActiveSection('profile');
+                          setShowUserMenu(false);
+                        }}
+                        className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      >
+                        <Settings className="h-4 w-4 mr-2" />
+                        Account Settings
+                      </button>
+                      <button
+                        onClick={() => {
+                          setActiveSection('billing');
+                          setShowUserMenu(false);
+                        }}
+                        className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      >
+                        <DollarSign className="h-4 w-4 mr-2" />
+                        Billing & Invoices
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -175,7 +188,6 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex gap-6">
-          {/* Sidebar */}
           {activeSection !== 'profile' && (
             <div className="w-64 flex-shrink-0">
               <div className="bg-white rounded-lg shadow-sm p-4">
@@ -202,7 +214,6 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
             </div>
           )}
 
-          {/* Main Content */}
           <div className="flex-1">
             {showGettingStarted && activeSection === 'inbox' && (
               <div className="mb-8 bg-white rounded-lg shadow-sm">

@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { Package2, ArrowLeft } from 'lucide-react';
 import LoginMethods from './LoginMethods';
 import PasswordlessForm from './PasswordlessForm';
+import MagicLinkForm from './MagicLinkForm';
 
 const loginSchema = z.object({
   identifier: z.string().min(1, 'Required'),
@@ -29,10 +30,11 @@ interface LoginPageProps {
 }
 
 const LoginPage: React.FC<LoginPageProps> = ({ onLogin, mockUser }) => {
-  const [loginMethod, setLoginMethod] = useState<'account' | 'passwordless'>('account');
+  const [loginMethod, setLoginMethod] = useState<'account' | 'passwordless' | 'magic-link'>('account');
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [show2FA, setShow2FA] = useState(false);
   const [passwordlessLinkSent, setPasswordlessLinkSent] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
 
   const { register: loginRegister, handleSubmit: handleLoginSubmit, formState: { errors: loginErrors } } = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
@@ -47,18 +49,30 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, mockUser }) => {
   });
 
   const onLoginSubmit = (data: LoginForm) => {
-    if (mockUser.has2FAEnabled) {
-      setShow2FA(true);
+    setLoginError(null);
+    // Simulate login validation
+    if (data.identifier === mockUser.email) {
+      if (mockUser.has2FAEnabled) {
+        setShow2FA(true);
+      } else {
+        onLogin(mockUser);
+      }
     } else {
-      onLogin(mockUser);
+      setLoginError('Invalid credentials');
     }
   };
 
   const on2FASubmit = (data: TwoFactorForm) => {
-    onLogin(mockUser);
+    // Simulate 2FA validation - in real app would verify against backend
+    if (data.code === '123456') {
+      onLogin(mockUser);
+    } else {
+      setLoginError('Invalid 2FA code');
+    }
   };
 
   const onForgotPasswordSubmit = (data: ForgotPasswordForm) => {
+    // Simulate password reset email
     alert(`Password reset link sent to ${data.identifier}`);
     setShowForgotPassword(false);
   };
@@ -69,6 +83,18 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, mockUser }) => {
 
   const renderLoginForm = () => (
     <form onSubmit={handleLoginSubmit(onLoginSubmit)} className="space-y-6">
+      {loginError && (
+        <div className="rounded-md bg-red-50 p-4">
+          <div className="flex">
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-red-800">
+                {loginError}
+              </h3>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div>
         <label htmlFor="identifier" className="block text-sm font-medium text-gray-700">
           Email or Username
@@ -124,15 +150,32 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, mockUser }) => {
 
   const render2FAForm = () => (
     <form onSubmit={handle2FASubmit(on2FASubmit)} className="space-y-6">
+      {loginError && (
+        <div className="rounded-md bg-red-50 p-4">
+          <div className="flex">
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-red-800">
+                {loginError}
+              </h3>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div>
         <label htmlFor="code" className="block text-sm font-medium text-gray-700">
-          2FA Code
+          Enter 2FA Code
         </label>
+        <p className="mt-1 text-sm text-gray-500">
+          Enter the 6-digit code from your authenticator app
+        </p>
         <div className="mt-1">
           <input
             {...twoFactorRegister('code')}
             type="text"
+            maxLength={6}
             className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+            placeholder="123456"
           />
           {twoFactorErrors.code && (
             <p className="mt-1 text-sm text-red-600">{twoFactorErrors.code.message}</p>
@@ -140,12 +183,19 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, mockUser }) => {
         </div>
       </div>
 
-      <div>
+      <div className="flex items-center justify-between">
+        <button
+          type="button"
+          onClick={() => setShow2FA(false)}
+          className="text-sm font-medium text-gray-600 hover:text-gray-500"
+        >
+          ← Back to login
+        </button>
         <button
           type="submit"
-          className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          className="flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
         >
-          Verify
+          Verify Code
         </button>
       </div>
     </form>
@@ -167,12 +217,12 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, mockUser }) => {
       <form onSubmit={handleForgotSubmit(onForgotPasswordSubmit)} className="space-y-6">
         <div>
           <label htmlFor="identifier" className="block text-sm font-medium text-gray-700">
-            Email or Username
+            Email Address
           </label>
           <div className="mt-1">
             <input
               {...forgotPasswordRegister('identifier')}
-              type="text"
+              type="email"
               className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
             />
             {forgotErrors.identifier && (
@@ -186,7 +236,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, mockUser }) => {
             type="submit"
             className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
           >
-            Reset Password
+            Send Reset Link
           </button>
         </div>
       </form>
@@ -212,6 +262,9 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, mockUser }) => {
         {showForgotPassword && renderForgotPasswordForm()}
         {loginMethod === 'passwordless' && (
           <PasswordlessForm onSuccess={handlePasswordlessSuccess} />
+        )}
+        {loginMethod === 'magic-link' && (
+          <MagicLinkForm onSuccess={handlePasswordlessSuccess} />
         )}
 
         {passwordlessLinkSent && (
